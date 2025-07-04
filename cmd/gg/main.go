@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Kaamkiya/gg/internal/app/blackjack"
 	"github.com/Kaamkiya/gg/internal/app/connect4"
 	"github.com/Kaamkiya/gg/internal/app/dodger"
 	"github.com/Kaamkiya/gg/internal/app/hangman"
@@ -36,6 +37,7 @@ func main() {
 			huh.NewOption("pong (2 player)", "pong"),
 			huh.NewOption("tictactoe (2 player)", "tictactoe"),
 			huh.NewOption("tictactoe (vs AI)", "tictactoe-ai"),
+			huh.NewOption("blackjack", "blackjack"),
 		).
 		Value(&game).
 		Run()
@@ -67,6 +69,8 @@ func main() {
 		sudoku.Run()
 	case "tetris":
 		tetris.Run()
+	case "blackjack":
+		blackjack.Run()
 	default:
 		panic("This game either doesn't exist or hasn't been implemented.")
 	}
