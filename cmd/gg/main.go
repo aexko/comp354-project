@@ -37,7 +37,7 @@ func main() {
 			huh.NewOption("pong (2 player)", "pong"),
 			huh.NewOption("tictactoe (2 player)", "tictactoe"),
 			huh.NewOption("tictactoe (vs AI)", "tictactoe-ai"),
-			huh.NewOption("blackjack", "blackjack"),
+			huh.NewOption("blackjack (2 player)", "blackjack"),
 		).
 		Value(&game).
 		Run()
