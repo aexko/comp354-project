@@ -265,11 +265,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "enter", " ":
 				// Advance to next round or end game
-				m.game.currentRound++
-				m.game.currentPlayer = 0
-				if m.game.currentRound > m.game.numberOfRounds {
+				if m.game.currentRound >= m.game.numberOfRounds {
 					m.game.phase = "game_over"
 				} else {
+					m.game.currentRound++
+					m.game.currentPlayer = 0
 					m.game.deck.Shuffle()
 					m.game.phase = "deal"
 				}
