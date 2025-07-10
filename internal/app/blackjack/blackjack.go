@@ -255,21 +255,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case "dealer_turn":
-		// Dealer hits until score is at least 17
-		for m.game.dealer.GetScore() < 17 {
-			m.game.dealer.Hit(m.game.deck)
+		// Check if all players have busted
+		allPlayersBusted := true
+		for _, player := range m.game.players {
+			if player.GetScore() <= 21 {
+				allPlayersBusted = false
+				break
+			}
 		}
-		m.game.phase = "round_end"
+
+		if allPlayersBusted {
+			// Skip dealer's turn if all players have busted
+			m.game.phase = "round_end"
+		} else {
+			// Dealer hits until score is at least 17
+			for m.game.dealer.GetScore() < 17 {
+				m.game.dealer.Hit(m.game.deck)
+			}
+			m.game.phase = "round_end"
+		}
 	case "round_end":
 		if msg, ok := msg.(tea.KeyMsg); ok {
 			switch msg.String() {
 			case "enter", " ":
 				// Advance to next round or end game
-				m.game.currentRound++
-				m.game.currentPlayer = 0
-				if m.game.currentRound > m.game.numberOfRounds {
+				if m.game.currentRound >= m.game.numberOfRounds {
 					m.game.phase = "game_over"
 				} else {
+					m.game.currentRound++
+					m.game.currentPlayer = 0
 					m.game.deck.Shuffle()
 					m.game.phase = "deal"
 				}
