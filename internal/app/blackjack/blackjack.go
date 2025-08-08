@@ -216,10 +216,10 @@ func initialModel() tea.Model {
 	}
 }
 
-// Init initializes the model by shuffling the deck and returns no initial commands.
+// Init initializes the model by shuffling the deck and returns a clear screen command.
 func (m model) Init() tea.Cmd {
 	m.game.deck.Shuffle()
-	return nil
+	return tea.ClearScreen
 }
 
 // Update handles user input and updates the game state based on the current phase.
@@ -268,11 +268,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Skip dealer's turn if all players have busted
 			m.game.phase = "round_end"
 		} else {
-			// Dealer hits until score is at least 17
-			for m.game.dealer.GetScore() < 17 {
-				m.game.dealer.Hit(m.game.deck)
+			// Dealer must hit until reaching 17 or higher
+			if msg, ok := msg.(tea.KeyMsg); ok {
+				switch msg.String() {
+				case "ctrl+c", "q":
+					return m, tea.Quit
+				case "enter", " ", "h":
+					// Dealer hits until score is at least 17
+					for m.game.dealer.GetScore() < 17 {
+						m.game.dealer.Hit(m.game.deck)
+					}
+					// Once dealer reaches 17+, move to round end
+					m.game.phase = "round_end"
+				}
 			}
-			m.game.phase = "round_end"
 		}
 	case "round_end":
 		if msg, ok := msg.(tea.KeyMsg); ok {
@@ -286,6 +295,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.game.currentPlayer = 0
 					m.game.deck.Shuffle()
 					m.game.phase = "deal"
+					// Return a command to clear screen and refresh
+					return m, tea.ClearScreen
 				}
 			}
 		}
@@ -359,15 +370,28 @@ func (m model) View() string {
 	case "player_turn":
 		s += fmt.Sprintf("\n%s's turn: Press 'h' to hit, 's' to stand", m.game.players[m.game.currentPlayer].name)
 	case "dealer_turn":
-		s += "\nDealer's turn"
+		dealerScore := m.game.dealer.GetScore()
+		if dealerScore < 17 {
+			s += fmt.Sprintf("\nDealer has %d (must hit until 17). Press Enter, Space, or 'h'", dealerScore)
+		} else {
+			s += fmt.Sprintf("\nDealer has %d (stands). Press Enter, Space, or 'h' to see results", dealerScore)
+		}
 	case "round_end":
 		s += m.headerStyle.Render("\nRound Results:")
 		dealerScore := m.game.dealer.GetScore()
 		for i, player := range m.game.players {
 			playerScore := player.GetScore()
-			result := "loses"
-			if playerScore <= 21 && (dealerScore > 21 || playerScore > dealerScore) {
+			var result string
+			if playerScore > 21 {
+				result = "loses (bust)"
+			} else if dealerScore > 21 {
+				result = "wins (dealer bust)"
+			} else if playerScore == dealerScore {
+				result = "ties (push)"
+			} else if playerScore > dealerScore {
 				result = "wins"
+			} else {
+				result = "loses"
 			}
 			s += fmt.Sprintf("\nPlayer %d %s (Player: %d vs Dealer: %d)", i+1, result, playerScore, dealerScore)
 		}
